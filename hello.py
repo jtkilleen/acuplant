@@ -1,8 +1,7 @@
 import sqlite3
-import user
 from flask import Flask,render_template, request, session, g, redirect, url_for, abort, flash
 from contextlib import closing
-
+from flask.ext.bcrypt import Bcrypt
 
 #configuration
 DATABASE = '/tmp/hello.db'
@@ -12,6 +11,7 @@ USERNAME = 'admin'
 PASSWORD = 'default'
 
 app = Flask(__name__)
+bcrypt = Bcrypt(app)
 app.config.from_object(__name__)
 
 def connect_db():
@@ -50,7 +50,20 @@ def show_post(post_id):
 
 @app.route('/signup', methods=['GET','POST'])
 def signup():
+	if request.method == 'POST':
+		cur = g.db.execute('select * from users where username = (?)',[request.form['inputEmail']])
+		pw =  request.form['inputPassword']
+		print pw, bcrypt.generate_password_hash(pw)
+		entries = len(cur.fetchall())
+		print "ENTRIES %s" % entries
+		return redirect(url_for('show_trees'))
 	return render_template('signup.html')
+
+@app.route('/login', methods=['GET','POST'])
+def login():
+	pw_hash = bcrypt.generate_password_hash('hunter2')
+	print bcrypt.check_password_hash(pw_hash, 'hunter2') # returns True
+	return render_template('login.html')
 
 @app.route('/show')
 def show():

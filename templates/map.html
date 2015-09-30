@@ -47,10 +47,8 @@
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
-        <li><a href="#">Link <span class="sr-only">(current)</span></a></li>
-        <li><a href="#">Link</a></li>
         <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Settings <span class="caret"></span></a>
           <ul class="dropdown-menu">
             <li><a href="#">Action</a></li>
             <li><a href="#">Another action</a></li>
@@ -122,14 +120,14 @@ function initMap() {
   centerControlDiv.index = 1;
   map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
 
-  var contentString = "<form action='' method=post class=add-entry><dl><dt>Common Name:<dd><input type=text size=30 name=title><dt>Scientific Name:<dd><input type=text size=30 name=text></textarea><dd><br><input type=submit value=Share></dl></form>";
+  var contentString = "<form action='' method=post class=add-entry><dl><dt>Common Name:<dd><input type=text size=30 name=title><dt>Scientific Name:<dd><input type=text size=30 name=text></textarea><dd><br><input type=submit value=Submit></dl></form>";
 
   var infowindow = new google.maps.InfoWindow({
     content: contentString
   });
 
   var icon = {
-    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Broccoli-tree.svg/509px-Broccoli-tree.svg.png", // url
+    url: "static/Tree.png", // url
     scaledSize: new google.maps.Size(50, 50), // scaled size
     origin: new google.maps.Point(0,0), // origin
     anchor: new google.maps.Point(0, 0) // anchor
@@ -156,7 +154,7 @@ function placeTree(latLng, map)
 {
 
   var icon = {
-    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Broccoli-tree.svg/509px-Broccoli-tree.svg.png", // url
+    url: "static/Tree.png", // url
     scaledSize: new google.maps.Size(50, 50), // scaled size
     origin: new google.maps.Point(0,0), // origin
     anchor: new google.maps.Point(25,25) // anchor

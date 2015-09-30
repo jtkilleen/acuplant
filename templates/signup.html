@@ -1,0 +1,20 @@
+{% extends "template.html" %}
+{% block body %}
+<body class="signup">
+<div class="container signupmodule">
+
+      <form class="form-signin" action="/signup" method="POST">
+        <h2 class="form-signin-heading">Sign Up</h2>
+        <label for="inputEmail" class="sr-only">Email address</label>
+        <input type="email" name="inputEmail" id="inputEmail" class="form-control" placeholder="Email address" required="" autofocus="">
+        <label for="inputPassword" class="sr-only">Password</label>
+        <input type="password" name="inputPassword" id="inputPassword" class="form-control" placeholder="Password" required="">
+        <label for="confirmPassword" class="sr-only">Confirm Password</label>
+        <input type="password" name="confirmPassword" id="confirmPassword" class="form-control" placeholder="Confirm Password" required="">
+        <br>
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Sign Up</button>
+      </form>
+
+    </div> <!-- /container -->
+</body>
+{% endblock %}

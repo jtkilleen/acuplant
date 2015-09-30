@@ -8,6 +8,6 @@ create table plants(
 drop table if exists users;
 create table users(
 	id integer primary key autoincrement,
-	username varchar(20) not null,
-	password varchar(20) not null
+	username varchar(255) not null,
+	password varchar(255) not null
 );
