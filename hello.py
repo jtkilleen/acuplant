@@ -36,7 +36,7 @@ def teardown_request(exception):
 
 @app.route('/', methods=['GET','POST'])
 def show_trees():
-    return render_template("map.html")
+	return render_template("map.html")
 
 @app.route('/user/<username>')
 def show_user_profile(username):
@@ -52,18 +52,37 @@ def show_post(post_id):
 def signup():
 	if request.method == 'POST':
 		cur = g.db.execute('select * from users where username = (?)',[request.form['inputEmail']])
-		pw =  request.form['inputPassword']
-		print pw, bcrypt.generate_password_hash(pw)
+		oldpw =  request.form['inputPassword']
+		pw = bcrypt.generate_password_hash(oldpw)
 		entries = len(cur.fetchall())
-		print "ENTRIES %s" % entries
-		return redirect(url_for('show_trees'))
+		if entries == 0:
+			g.db.execute('insert into users (username, password) VALUES (?,?)',[request.form['inputEmail'],pw])
+			g.db.commit()
+			return redirect(url_for('show_trees'))
+
+		return redirect(url_for('signup'))
 	return render_template('signup.html')
 
 @app.route('/login', methods=['GET','POST'])
 def login():
-	pw_hash = bcrypt.generate_password_hash('hunter2')
-	print bcrypt.check_password_hash(pw_hash, 'hunter2') # returns True
+	if request.method == 'POST':
+		cur = g.db.execute('select * from users where username = (?)', [request.form['inputEmail']])
+		entries = [dict(username=row[1], password=row[2]) for row in cur.fetchall()]
+		#bcrypt.generate_password_hash(request.form['inputPassword'])
+		print entries, len(entries)
+		if len(entries) == 1 and bcrypt.check_password_hash(entries[0]['password'],request.form['inputPassword']):
+			session['logged_in'] = True
+			return redirect(url_for('show_trees'))
+		else:
+			return render_template('login.html')
+	# pw_hash = bcrypt.generate_password_hash('hunter2')
+	# print bcrypt.check_password_hash(pw_hash, 'hunter2') # returns True
 	return render_template('login.html')
+
+@app.route('/logout', methods=['GET','POST'])
+def logout():
+	session.pop('logged_in', None)
+	return redirect(url_for('login'))
 
 @app.route('/show')
 def show():

@@ -61,7 +61,14 @@
         </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
-        <li><a href="#">Logout</a></li>
+        <li>
+        {% if not session.logged_in %}
+        <a href="{{ url_for('login') }}">Log In</a>
+        {% else %}
+        <a href="{{ url_for('logout') }}">Log Out</a>
+        {% endif %}
+          <!-- <a href="/logout">Logout</a> -->
+          </li>
       </ul>
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->
