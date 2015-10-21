@@ -119,10 +119,110 @@ function CenterControl(controlDiv, map) {
   });
 
 }
+
+
 function initMap() {
-  map = new google.maps.Map(document.getElementById('map'), {
-    center: acu,
-    zoom: 16
+
+  if(navigator.geolocation)
+  {
+    navigator.geolocation.getCurrentPosition(function(position)
+      {
+        acu = {lat: position.coords.latitude, lng: position.coords.longitude};
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: acu,
+            zoom: 16
+        });
+
+  var centerControlDiv = document.createElement('div');
+  var centerControl = new CenterControl(centerControlDiv, map);
+
+  centerControlDiv.index = 1;
+  map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
+
+  var contentString = "<form id='addTree' class=add-entry onSubmit='return send();'><select name='select'>";
+  {% for entry in entries %}
+  contentString += "<option value='{{entry.title}}'>{{entry.title}}</option>";
+  {% endfor %}
+  contentString += "</select><input type='hidden' name='latitude' value="+acu.lat+"></input>";
+  contentString += "<input type='hidden' name='longitude' value="+acu.lng+"></input>"
+  contentString += "<br><br><button value='submit'>Submit</button></form>";
+  var infowindow = new google.maps.InfoWindow({
+    content: contentString
+  });
+
+  var icon = {
+    url: "static/Tree.png", // url
+    scaledSize: new google.maps.Size(50, 50), // scaled size
+    origin: new google.maps.Point(0,0), // origin
+    anchor: new google.maps.Point(0, 0) // anchor
+};
+
+  var marker = new google.maps.Marker({
+    position: acu,
+    map: map,
+    icon: icon,
+    title: 'ACU'
+  });
+
+
+  marker.addListener('click', function() {
+    infowindow.open(map, marker);
+  });
+
+  map.addListener('click', function(e) {
+    placeTree(e.latLng, map);
+  });
+
+  var positionlist = []
+  {% for plant in plants %}
+  // var newmarker = new google.maps.Marker({
+  //   position: {lat: Number({{plant.xCoord}}), lng: Number({{plant.yCoord}})},
+  //   map: map,
+  //   icon: icon,
+  //   title: "{{plant.id}}"
+  // });
+
+  // newmarker.addListener('click', function(){
+  //   infowindow.open(map, newmarker);
+  // });
+  positionlist.push({lat: Number({{plant.xCoord}}), lng: Number({{plant.yCoord}})});
+  {% endfor %}
+  for(var i = 0; i < positionlist.length; i++)
+  {
+    var newmarker = new google.maps.Marker({
+      position: positionlist[i],
+      map: map,
+      icon: icon,
+      title: "Tree"
+    });
+
+    var cString = "<form id='addTree' class=add-entry onSubmit='return send();'><select name='select'>";
+    {% for entry in entries %}
+    cString += "<option value='{{entry.title}}'>{{entry.title}}</option>";
+    {% endfor %}
+    cString += "</select><input type='hidden' name='latitude' value="+positionlist[i].lat+"></input>";
+    cString += "<input type='hidden' name='longitude' value="+positionlist[i].lng+"></input>"
+    cString += "<br><br><button value='submit'>Submit</button></form>";
+    var infowindow = new google.maps.InfoWindow({
+      content: cString
+    });
+
+    newmarker.addListener('click', function(){
+      infowindow.open(map, this);
+    })
+  }
+
+        // map = new google.maps.Map(document.getElementById('map'), {
+        // center: acu,
+        // zoom: 16
+        // });
+      });
+  }
+  else
+  {
+    map = new google.maps.Map(document.getElementById('map'), {
+      center: acu,
+      zoom: 16
   });
 
   var centerControlDiv = document.createElement('div');
@@ -204,6 +304,91 @@ function initMap() {
     })
   }
 
+  }
+//   map = new google.maps.Map(document.getElementById('map'), {
+//       center: acu,
+//       zoom: 16
+//   });
+
+//   var centerControlDiv = document.createElement('div');
+//   var centerControl = new CenterControl(centerControlDiv, map);
+
+//   centerControlDiv.index = 1;
+//   map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
+
+//   var contentString = "<form id='addTree' class=add-entry onSubmit='return send();'><select name='select'>";
+//   {% for entry in entries %}
+//   contentString += "<option value='{{entry.title}}'>{{entry.title}}</option>";
+//   {% endfor %}
+//   contentString += "</select><input type='hidden' name='latitude' value="+acu.lat+"></input>";
+//   contentString += "<input type='hidden' name='longitude' value="+acu.lng+"></input>"
+//   contentString += "<br><br><button value='submit'>Submit</button></form>";
+//   var infowindow = new google.maps.InfoWindow({
+//     content: contentString
+//   });
+
+//   var icon = {
+//     url: "static/Tree.png", // url
+//     scaledSize: new google.maps.Size(50, 50), // scaled size
+//     origin: new google.maps.Point(0,0), // origin
+//     anchor: new google.maps.Point(0, 0) // anchor
+// };
+
+//   var marker = new google.maps.Marker({
+//     position: acu,
+//     map: map,
+//     icon: icon,
+//     title: 'ACU'
+//   });
+
+
+//   marker.addListener('click', function() {
+//     infowindow.open(map, marker);
+//   });
+
+//   map.addListener('click', function(e) {
+//     placeTree(e.latLng, map);
+//   });
+
+//   var positionlist = []
+//   {% for plant in plants %}
+//   // var newmarker = new google.maps.Marker({
+//   //   position: {lat: Number({{plant.xCoord}}), lng: Number({{plant.yCoord}})},
+//   //   map: map,
+//   //   icon: icon,
+//   //   title: "{{plant.id}}"
+//   // });
+
+//   // newmarker.addListener('click', function(){
+//   //   infowindow.open(map, newmarker);
+//   // });
+//   positionlist.push({lat: Number({{plant.xCoord}}), lng: Number({{plant.yCoord}})});
+//   {% endfor %}
+//   for(var i = 0; i < positionlist.length; i++)
+//   {
+//     var newmarker = new google.maps.Marker({
+//       position: positionlist[i],
+//       map: map,
+//       icon: icon,
+//       title: "Tree"
+//     });
+
+//     var cString = "<form id='addTree' class=add-entry onSubmit='return send();'><select name='select'>";
+//     {% for entry in entries %}
+//     cString += "<option value='{{entry.title}}'>{{entry.title}}</option>";
+//     {% endfor %}
+//     cString += "</select><input type='hidden' name='latitude' value="+positionlist[i].lat+"></input>";
+//     cString += "<input type='hidden' name='longitude' value="+positionlist[i].lng+"></input>"
+//     cString += "<br><br><button value='submit'>Submit</button></form>";
+//     var infowindow = new google.maps.InfoWindow({
+//       content: cString
+//     });
+
+//     newmarker.addListener('click', function(){
+//       infowindow.open(map, this);
+//     })
+//   }
+
 }
 
 function placeTree(latLng, map)
@@ -227,7 +412,7 @@ function placeTree(latLng, map)
   {% endfor %}
   contentString += "</select><input type='hidden' name='latitude' value="+latLng.lat()+"></input>";
   contentString += "<input type='hidden' name='longitude' value="+latLng.lng()+"></input>";
-  contentString += "<br><br><button value='submit'></button></form>";
+  contentString += "<br><br><button value='submit'>Submit</button></form>";
   var infowindow = new google.maps.InfoWindow({
     content: contentString
   });
