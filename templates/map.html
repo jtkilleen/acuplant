@@ -21,6 +21,10 @@
         height: 90%;
       }
 
+      button {
+        width: 90px;
+      }
+
       @media only screen and (max-device-width : 667px) {
         #map {
            margin-top: -5%;
@@ -121,14 +125,19 @@ function initMap() {
     zoom: 16
   });
 
-   var centerControlDiv = document.createElement('div');
+  var centerControlDiv = document.createElement('div');
   var centerControl = new CenterControl(centerControlDiv, map);
 
   centerControlDiv.index = 1;
   map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
 
-  var contentString = "<form action='' method=post class=add-entry><dl><dt>Common Name:<dd><input type=text size=30 name=title><dt>Scientific Name:<dd><input type=text size=30 name=text></textarea><dd><br><input type=submit value=Submit></dl></form>";
-
+  var contentString = "<form id='addTree' class=add-entry onSubmit='return send();'><select name='select'>";
+  {% for entry in entries %}
+  contentString += "<option value='{{entry.title}}'>{{entry.title}}</option>";
+  {% endfor %}
+  contentString += "</select><input type='hidden' name='latitude' value="+acu.lat+"></input>";
+  contentString += "<input type='hidden' name='longitude' value="+acu.lng+"></input>"
+  contentString += "<br><br><button value='submit'>Submit</button></form>";
   var infowindow = new google.maps.InfoWindow({
     content: contentString
   });
@@ -147,6 +156,7 @@ function initMap() {
     title: 'ACU'
   });
 
+
   marker.addListener('click', function() {
     infowindow.open(map, marker);
   });
@@ -154,6 +164,45 @@ function initMap() {
   map.addListener('click', function(e) {
     placeTree(e.latLng, map);
   });
+
+  var positionlist = []
+  {% for plant in plants %}
+  // var newmarker = new google.maps.Marker({
+  //   position: {lat: Number({{plant.xCoord}}), lng: Number({{plant.yCoord}})},
+  //   map: map,
+  //   icon: icon,
+  //   title: "{{plant.id}}"
+  // });
+
+  // newmarker.addListener('click', function(){
+  //   infowindow.open(map, newmarker);
+  // });
+  positionlist.push({lat: Number({{plant.xCoord}}), lng: Number({{plant.yCoord}})});
+  {% endfor %}
+  for(var i = 0; i < positionlist.length; i++)
+  {
+    var newmarker = new google.maps.Marker({
+      position: positionlist[i],
+      map: map,
+      icon: icon,
+      title: "Tree"
+    });
+
+    var cString = "<form id='addTree' class=add-entry onSubmit='return send();'><select name='select'>";
+    {% for entry in entries %}
+    cString += "<option value='{{entry.title}}'>{{entry.title}}</option>";
+    {% endfor %}
+    cString += "</select><input type='hidden' name='latitude' value="+positionlist[i].lat+"></input>";
+    cString += "<input type='hidden' name='longitude' value="+positionlist[i].lng+"></input>"
+    cString += "<br><br><button value='submit'>Submit</button></form>";
+    var infowindow = new google.maps.InfoWindow({
+      content: cString
+    });
+
+    newmarker.addListener('click', function(){
+      infowindow.open(map, this);
+    })
+  }
 
 }
 
@@ -171,7 +220,36 @@ function placeTree(latLng, map)
     icon: icon,
     map: map
   });
+
+  var contentString = "<form id='addTree' class=add-entry onSubmit='return send();'><select name='select'>";
+  {% for entry in entries %}
+  contentString += "<option value='{{entry.title}}'>{{entry.title}}</option>";
+  {% endfor %}
+  contentString += "</select><input type='hidden' name='latitude' value="+latLng.lat()+"></input>";
+  contentString += "<input type='hidden' name='longitude' value="+latLng.lng()+"></input>";
+  contentString += "<br><br><button value='submit'></button></form>";
+  var infowindow = new google.maps.InfoWindow({
+    content: contentString
+  });
+
+  marker.addListener('click', function() {
+    infowindow.open(map, marker);
+  });
 }
+
+function send()
+{
+  $.ajax({
+      type: "POST",
+      url: "/",
+      data: $("#addTree").serialize(),
+      success: function(data){
+        alert("SENT");
+      }
+    });
+  return false;
+}
+
 
     </script>
     <script src="https://maps.googleapis.com/maps/api/js?callback=initMap"

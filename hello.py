@@ -36,7 +36,26 @@ def teardown_request(exception):
 
 @app.route('/', methods=['GET','POST'])
 def show_trees():
-	return render_template("map.html")
+	if request.method == 'POST':
+		cur = g.db.execute('select * from plantlocation where xCoord = (?) and yCoord = (?)',[request.form['latitude'],request.form['longitude']])
+		entries = [dict(id=row[0]) for row in cur.fetchall()]
+		if len(entries) == 0:
+			cur = g.db.execute('select * from plants where commonname = (?)', [request.form['select']])
+			entries = [dict(id=row[0], commonname=row[1], sciname=row[2]) for row in cur.fetchall()][0]
+			print entries
+			print request.form['latitude']
+			print request.form['longitude']
+			g.db.execute('insert into plantlocation (treeid, xCoord, yCoord) VALUES (?,?,?)',[entries['id'],request.form['latitude'],request.form['longitude']])
+			g.db.commit()
+		else:
+			print "Tree Already Added"
+		return render_template("map.html")
+	cur = g.db.execute('select * from plants')
+	entries = [dict(title=row[1], text=row[2]) for row in cur.fetchall()]
+	cur = g.db.execute('select * from plantlocation')
+	plants = [dict(id=row[1], xCoord=row[2], yCoord=row[3]) for row in cur.fetchall()]
+	print plants
+	return render_template("map.html", entries=entries, plants=plants)
 
 @app.route('/user/<username>')
 def show_user_profile(username):
@@ -47,6 +66,14 @@ def show_user_profile(username):
 def show_post(post_id):
     # show the post with the given id, the id is an integer
     return 'Post %d' % post_id
+
+@app.route('/add', methods=['GET','POST'])
+def add_tree():
+	if request.method == 'POST':
+		g.db.execute('insert into plants (commonname, sciname) VALUES (?,?)', [request.form['commonname'],request.form['sciname']])
+		g.db.commit()
+		return redirect(url_for('show'))
+	return render_template('add.html')
 
 @app.route('/signup', methods=['GET','POST'])
 def signup():
@@ -89,6 +116,12 @@ def show():
 	cur = g.db.execute('select * from plants')
 	entries = [dict(title=row[1], text=row[2]) for row in cur.fetchall()]
 	return render_template('show.html', entries=entries)
+
+@app.route('/locations')
+def locations():
+	cur = g.db.execute('select * from plantlocation')
+	entries = [dict(id=row[1], xCoord=row[2], yCoord=row[3]) for row in cur.fetchall()]
+	return render_template('locations.html', entries=entries)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')

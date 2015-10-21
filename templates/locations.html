@@ -1,7 +1,7 @@
 {% block body %}
   <ul class=entries>
   {% for entry in entries %}
-    <li>{{ entry.title }} {{entry.text}}
+    <li>{{ entry.id }} {{entry.xCoord}} {{entry.yCoord}}
   {% else %}
     <li><em>Unbelievable.  No entries here so far</em>
   {% endfor %}
