@@ -169,9 +169,11 @@ function initMap() {
     infowindow.open(map, marker);
   });
 
+  {% if session['logged_in'] %}
   map.addListener('click', function(e) {
     placeTree(e.latLng, map);
   });
+  {% endif %}
 
   var positionlist = []
   {% for plant in plants %}
@@ -256,14 +258,16 @@ function initMap() {
     title: 'ACU'
   });
 
-
+  
   marker.addListener('click', function() {
     infowindow.open(map, marker);
   });
 
+  {% if session['logged_in'] %}
   map.addListener('click', function(e) {
     placeTree(e.latLng, map);
   });
+  {% endif %}
 
   var positionlist = []
   {% for plant in plants %}
