@@ -75,7 +75,7 @@ def show_trees():
 		else:
 			print "Tree Already Added"
 		return render_template("map.html")
-	cur = g.db.execute('select * from plants')
+	cur = g.db.execute('select * from plants group by commonname order by commonname')
 	entries = [dict(title=row[1], text=row[2]) for row in cur.fetchall()]
 	cur = g.db.execute('select * from plants inner join plantlocation on plants.id=plantlocation.treeid')
 	plants = [dict(id=row[0], commonname=row[1], sciname=row[2], xCoord=row[5], yCoord=row[6]) for row in cur.fetchall()]
