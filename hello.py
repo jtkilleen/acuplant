@@ -1,4 +1,5 @@
 import sqlite3
+import csv
 from flask import Flask,render_template, request, session, g, redirect, url_for, abort, flash
 from contextlib import closing
 from flask.ext.bcrypt import Bcrypt
@@ -7,8 +8,6 @@ from flask.ext.bcrypt import Bcrypt
 DATABASE = '/tmp/hello.db'
 DEBUG = True
 SECRET_KEY = '1234'
-USERNAME = 'admin'
-PASSWORD = 'default'
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
@@ -34,6 +33,32 @@ def teardown_request(exception):
 		db.close()
 
 
+@app.route('/treedb')
+def add_everything():
+	cur = g.db.execute('select * from plants')
+	plants = [dict(commonname=row[1], sciname=row[2]) for row in cur.fetchall()]
+	cur = g.db.execute('select * from plants inner join plantlocation on plants.id=plantlocation.treeid')
+	plantlocations = [dict(commonname=row[1], sciname=row[2], latitude=row[5], longitude=row[6]) for row in cur.fetchall()]
+	with open('PlantData.csv', "rU") as csvfile:
+		reader = csv.DictReader(csvfile)
+		for row in reader:
+			print(row['TREE_SpeciesCommonName'],row['TREE_SpeciesLatinName'], row['x'], row['y'])
+			if row['TREE_SpeciesCommonName'] != '' and row['TREE_SpeciesLatinName'] != '' and dict(commonname=row['TREE_SpeciesCommonName'],sciname=row['TREE_SpeciesLatinName']) not in plants:
+				g.db.execute('insert into plants (commonname, sciname) VALUES (?,?)', [row['TREE_SpeciesCommonName'],row['TREE_SpeciesLatinName']])
+				g.db.commit()
+				plants.append(dict(commonname=row['TREE_SpeciesCommonName'],sciname=row['TREE_SpeciesLatinName']))
+
+			if row['TREE_SpeciesCommonName'] != '' and row['TREE_SpeciesLatinName'] != '' and row['x'] != '' and row['y'] != '' and dict(commonname=row['TREE_SpeciesCommonName'],sciname=row['TREE_SpeciesLatinName'],latitude=row['y'], longitude=row['x']) not in plantlocations:
+				cur = g.db.execute('select * from plants where commonname = (?)', [row['TREE_SpeciesCommonName']])
+				otherplants = [dict(id=a[0]) for a in cur.fetchall()]
+				g.db.execute('insert into plantlocation (treeid, xCoord, yCoord) VALUES (?,?,?)',[otherplants[0]['id'],row['y'],row['x']])
+				g.db.commit()
+				plantlocations.append(dict(commonname=row['TREE_SpeciesCommonName'], sciname=row['TREE_SpeciesLatinName'], latitude=row['y'], longitude=row['x']))
+
+	print plants
+	print plantlocations
+	return redirect(url_for('show'))
+
 @app.route('/', methods=['GET','POST'])
 def show_trees():
 	if request.method == 'POST':
@@ -42,7 +67,7 @@ def show_trees():
 		if len(entries) == 0:
 			cur = g.db.execute('select * from plants where commonname = (?)', [request.form['select']])
 			entries = [dict(id=row[0], commonname=row[1], sciname=row[2]) for row in cur.fetchall()][0]
-			print entries
+			print entries['id']
 			print request.form['latitude']
 			print request.form['longitude']
 			g.db.execute('insert into plantlocation (treeid, xCoord, yCoord) VALUES (?,?,?)',[entries['id'],request.form['latitude'],request.form['longitude']])
@@ -52,8 +77,8 @@ def show_trees():
 		return render_template("map.html")
 	cur = g.db.execute('select * from plants')
 	entries = [dict(title=row[1], text=row[2]) for row in cur.fetchall()]
-	cur = g.db.execute('select * from plantlocation')
-	plants = [dict(id=row[1], xCoord=row[2], yCoord=row[3]) for row in cur.fetchall()]
+	cur = g.db.execute('select * from plants inner join plantlocation on plants.id=plantlocation.treeid')
+	plants = [dict(id=row[0], commonname=row[1], sciname=row[2], xCoord=row[5], yCoord=row[6]) for row in cur.fetchall()]
 	print plants
 	return render_template("map.html", entries=entries, plants=plants)
 
@@ -113,7 +138,7 @@ def logout():
 
 @app.route('/show')
 def show():
-	cur = g.db.execute('select * from plants')
+	cur = g.db.execute('select * from plants order by commonname')
 	entries = [dict(title=row[1], text=row[2]) for row in cur.fetchall()]
 	return render_template('show.html', entries=entries)
 
