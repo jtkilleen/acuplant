@@ -157,17 +157,17 @@ function initMap() {
     anchor: new google.maps.Point(25, 50) // anchor
 };
 
-  var marker = new google.maps.Marker({
-    position: acu,
-    map: map,
-    icon: icon,
-    title: 'ACU'
-  });
+  // var marker = new google.maps.Marker({
+  //   position: acu,
+  //   map: map,
+  //   icon: icon,
+  //   title: 'ACU'
+  // });
 
 
-  marker.addListener('click', function() {
-    infowindow.open(map, marker);
-  });
+  // marker.addListener('click', function() {
+  //   infowindow.open(map, marker);
+  // });
 
   map.addListener('click', function(e) {
     placeTree(e.latLng, map);
@@ -188,19 +188,25 @@ function initMap() {
       icon: icon,
       title: namelist[i].commonname,
       commonname: namelist[i].commonname,
-      sciname: namelist[i].sciname
+      sciname: namelist[i].sciname,
+      latitude: positionlist[i]["lat"],
+      longitude: positionlist[i]["lng"]
     });
 
     newmarker.addListener('click', function(){
     {% if session['logged_in'] %}
     var cString = "<form id='addTree' class=add-entry onSubmit='return send();'>";
     cString += "<p>"+this.commonname+"</p><select name='select'>";
+    var i = 0;
     {% for entry in entries %}
+    var lati = this.latitude;
+    var longi = this.longitude;
+   
     cString += "<option value='{{entry.title}}'>{{entry.title}}</option>";
     {% endfor %}
-    cString += "</select><input type='hidden' name='latitude' value="+this.position.lat+"></input>";
-    cString += "<input type='hidden' name='longitude' value="+this.position.lng+"></input>"
-    cString += "<br><br><button value='submit'>Submit</button></form>";
+    cString += "</select><input type='hidden' name='latitude' value="+lati+"></input>";
+    cString += "<input type='hidden' name='longitude' value="+longi+"></input>"
+    cString += "<br><br><input type='checkbox' name='delete'>Delete Tree</input><br><br><button value='submit'>Submit</button></form>";
     {% else %}
     var cString = "<p>"+this.commonname+"</p>";
     {% endif %}
@@ -227,16 +233,16 @@ function initMap() {
   centerControlDiv.index = 1;
   map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
 
-  var contentString = "<form id='addTree' class=add-entry onSubmit='return send();'><select name='select'>";
-  {% for entry in entries %}
-  contentString += "<option value='{{entry.title}}'>{{entry.title}}</option>";
-  {% endfor %}
-  contentString += "</select><input type='hidden' name='latitude' value="+acu.lat+"></input>";
-  contentString += "<input type='hidden' name='longitude' value="+acu.lng+"></input>"
-  contentString += "<br><br><button value='submit'>Submit</button></form>";
-  var infowindow = new google.maps.InfoWindow({
-    content: contentString
-  });
+  // var contentString = "<form id='addTree' class=add-entry onSubmit='return send();'><select name='select'>";
+  // {% for entry in entries %}
+  // contentString += "<option value='{{entry.title}}'>{{entry.title}}</option>";
+  // {% endfor %}
+  // contentString += "</select><input type='hidden' name='latitude' value="+acu.lat+"></input>";
+  // contentString += "<input type='hidden' name='longitude' value="+acu.lng+"></input>"
+  // contentString += "<br><br><input type='checkbox' name='delete'>Delete Tree</input><br><br><button value='submit'>Submit</button></form>";
+  // var infowindow = new google.maps.InfoWindow({
+  //   content: contentString
+  // });
 
   var icon = {
     url: "static/Tree.png", // url
@@ -245,17 +251,17 @@ function initMap() {
     anchor: new google.maps.Point(0, 0) // anchor
 };
 
-  var marker = new google.maps.Marker({
-    position: acu,
-    map: map,
-    icon: icon,
-    title: 'ACU'
-  });
+  // var marker = new google.maps.Marker({
+  //   position: acu,
+  //   map: map,
+  //   icon: icon,
+  //   title: 'ACU'
+  // });
 
   
-  marker.addListener('click', function() {
-    infowindow.open(map, marker);
-  });
+  // marker.addListener('click', function() {
+  //   infowindow.open(map, marker);
+  // });
 
   map.addListener('click', function(e) {
     placeTree(e.latLng, map);
@@ -264,16 +270,8 @@ function initMap() {
   var positionlist = [];
   var namelist = [];
   {% for plant in plants %}
-  // var newmarker = new google.maps.Marker({
-  //   position: {lat: Number({{plant.xCoord}}), lng: Number({{plant.yCoord}})},
-  //   map: map,
-  //   icon: icon,
-  //   title: "{{plant.id}}"
-  // });
 
-  // newmarker.addListener('click', function(){
-  //   infowindow.open(map, newmarker);
-  // });
+
   namelist.push({commonname: "{{plant.commonname}}", sciname: "{{plant.sciname}}"})
   positionlist.push({lat: Number({{plant.xCoord}}), lng: Number({{plant.yCoord}})});
   {% endfor %}
@@ -290,18 +288,6 @@ function initMap() {
       sciname: namelist[i].sciname
     });
 
-    // var cString = "<form id='addTree' class=add-entry onSubmit='return send();'>";
-    // cString += "<p>"+namelist[i].commonname"</p><select name='select'>";
-    // {% for entry in entries %}
-    // cString += "<option value='{{entry.title}}'>{{entry.title}}</option>";
-    // {% endfor %}
-    // cString += "</select><input type='hidden' name='latitude' value="+positionlist[i].lat+"></input>";
-    // cString += "<input type='hidden' name='longitude' value="+positionlist[i].lng+"></input>"
-    // cString += "<br><br><button value='submit'>Submit</button></form>";
-    // var infowindow = new google.maps.InfoWindow({
-    //   content: cString
-    // });
-
     newmarker.addListener('click', function(){
       {% if session['logged_in'] %}
       var cString = "<form id='addTree' class=add-entry onSubmit='return send();'>";
@@ -311,7 +297,7 @@ function initMap() {
     {% endfor %}
     cString += "</select><input type='hidden' name='latitude' value="+this.position.lat+"></input>";
     cString += "<input type='hidden' name='longitude' value="+this.position.lng+"></input>"
-    cString += "<br><br><button value='submit'>Submit</button></form>";
+    cString += "<br><input type='checkbox' name='delete' value='Delete Tree'>Delete<br><button value='submit'>Submit</button></form>";
     {% else %}
     var cString = "<p>"+this.commonname+"</p>";
     {% endif %}
@@ -324,90 +310,6 @@ function initMap() {
   }
 
   }
-//   map = new google.maps.Map(document.getElementById('map'), {
-//       center: acu,
-//       zoom: 16
-//   });
-
-//   var centerControlDiv = document.createElement('div');
-//   var centerControl = new CenterControl(centerControlDiv, map);
-
-//   centerControlDiv.index = 1;
-//   map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
-
-//   var contentString = "<form id='addTree' class=add-entry onSubmit='return send();'><select name='select'>";
-//   {% for entry in entries %}
-//   contentString += "<option value='{{entry.title}}'>{{entry.title}}</option>";
-//   {% endfor %}
-//   contentString += "</select><input type='hidden' name='latitude' value="+acu.lat+"></input>";
-//   contentString += "<input type='hidden' name='longitude' value="+acu.lng+"></input>"
-//   contentString += "<br><br><button value='submit'>Submit</button></form>";
-//   var infowindow = new google.maps.InfoWindow({
-//     content: contentString
-//   });
-
-//   var icon = {
-//     url: "static/Tree.png", // url
-//     scaledSize: new google.maps.Size(50, 50), // scaled size
-//     origin: new google.maps.Point(0,0), // origin
-//     anchor: new google.maps.Point(0, 0) // anchor
-// };
-
-//   var marker = new google.maps.Marker({
-//     position: acu,
-//     map: map,
-//     icon: icon,
-//     title: 'ACU'
-//   });
-
-
-//   marker.addListener('click', function() {
-//     infowindow.open(map, marker);
-//   });
-
-//   map.addListener('click', function(e) {
-//     placeTree(e.latLng, map);
-//   });
-
-//   var positionlist = []
-//   {% for plant in plants %}
-//   // var newmarker = new google.maps.Marker({
-//   //   position: {lat: Number({{plant.xCoord}}), lng: Number({{plant.yCoord}})},
-//   //   map: map,
-//   //   icon: icon,
-//   //   title: "{{plant.id}}"
-//   // });
-
-//   // newmarker.addListener('click', function(){
-//   //   infowindow.open(map, newmarker);
-//   // });
-//   positionlist.push({lat: Number({{plant.xCoord}}), lng: Number({{plant.yCoord}})});
-//   {% endfor %}
-//   for(var i = 0; i < positionlist.length; i++)
-//   {
-//     var newmarker = new google.maps.Marker({
-//       position: positionlist[i],
-//       map: map,
-//       icon: icon,
-//       title: "Tree"
-//     });
-
-//     var cString = "<form id='addTree' class=add-entry onSubmit='return send();'><select name='select'>";
-//     {% for entry in entries %}
-//     cString += "<option value='{{entry.title}}'>{{entry.title}}</option>";
-//     {% endfor %}
-//     cString += "</select><input type='hidden' name='latitude' value="+positionlist[i].lat+"></input>";
-//     cString += "<input type='hidden' name='longitude' value="+positionlist[i].lng+"></input>"
-//     cString += "<br><br><button value='submit'>Submit</button></form>";
-//     var infowindow = new google.maps.InfoWindow({
-//       content: cString
-//     });
-
-//     newmarker.addListener('click', function(){
-//       infowindow.open(map, this);
-//     })
-//   }
-
 }
 
 function placeTree(latLng, map)
@@ -429,8 +331,8 @@ function placeTree(latLng, map)
   {% for entry in entries %}
   contentString += "<option value='{{entry.title}}'>{{entry.title}}</option>";
   {% endfor %}
-  contentString += "</select><input type='hidden' name='latitude' value="+latLng.lat()+"></input>";
-  contentString += "<input type='hidden' name='longitude' value="+latLng.lng()+"></input>";
+  contentString += "</select><input type='hidden' name='latitude' value="+latLng.lat().toFixed(10)+"></input>";
+  contentString += "<input type='hidden' name='longitude' value="+latLng.lng().toFixed(10)+"></input>";
   contentString += "<br><br><button value='submit'>Submit</button></form>";
   var infowindow = new google.maps.InfoWindow({
     content: contentString

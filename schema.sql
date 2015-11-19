@@ -14,8 +14,8 @@ create table users(
 
 drop table if exists plantlocation;
 create table plantlocation(
-	id integer primary key autoincrement,
 	treeid integer not null,
 	xCoord real not null,
-	yCoord real not null
+	yCoord real not null,
+	primary key (xCoord, yCoord)
 );
