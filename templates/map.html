@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
 
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
     <style>
       html, body {
         height: 100%;
@@ -19,6 +20,7 @@
       #map {
         margin-top: -10%;
         height: 90%;
+        z-index: 0;
       }
 
       button {
@@ -30,6 +32,10 @@
            margin-top: -5%;
            height: 90%;
         }
+      }
+
+      #filterOptions {
+        margin-top: 10px
       }
 
     </style>
@@ -65,6 +71,15 @@
         </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
+      <li><a class="navbar-brand">Filter</a></li>
+      <li>
+            <select class='form-control' id='filterOptions' onChange ='filterf();' name='filterOptions'>
+      {% for entry in entries %}
+       <option value='{{entry.title}}'>{{entry.title}}</option>
+      {% endfor %}
+
+      </select>
+          </li>
         <li>
         {% if not session.logged_in %}
         <a href="{{ url_for('login') }}">Log In</a>
@@ -73,23 +88,149 @@
         {% endif %}
           <!-- <a href="/logout">Logout</a> -->
           </li>
+
       </ul>
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->
 </nav>
     <div id="map"></div>
+    <!-- Trigger the modal with a button -->
+  <!-- <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal">Open Modal</button> -->
+
+<!-- Modal -->
+  <div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Modal Header</h4>
+        </div>
+        <div class="modal-body" id="modbod">
+        </div>
+        <div class="modal-footer" id="modfot">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
     <script>
 
 var map;
+var optionString = "<select class='tourClass'>";
+var otherString = "";
+    {% for entry in entries %}
+    otherString += "<option value='{{entry.title}}'>{{entry.title}}</option>";
+    {% endfor %}
+    optionString += otherString;
+    optionString += "</select>";
+$(document).ready()
+{
+  $('#myModal').on('shown.bs.modal', function (e) {
+    var str = "<form id='tours'>";
+    str += optionString;
+    str += "</form>"
+   document.getElementById('modbod').innerHTML = str;
+   document.getElementById('modfot').innerHTML = "<button type='button' onclick='addField()' class='btn'>Add Tree</button><button type='submit' onclick='return path();' class='btn btn-info'>Create Path</button>";
+  });
+}
 var markers = [];
 var filter = [];
 var acu = {lat: 32.469895, lng: -99.707831};
+var walkingTour = [];
+var treeTour = [];
+var walkingPath;
 
-/**
- * The CenterControl adds a control to the map that recenters the map on Chicago.
- * This constructor takes the control DIV as an argument.
- * @constructor
- */
+function addField()
+{
+  var elem = document.createElement('select');
+  elem.className = 'tourClass';
+  elem.innerHTML = otherString;
+  document.getElementById('tours').appendChild(elem);
+}
+
+function path()
+{
+  // var e = document.getElementById("tourOptions");
+  // var strUser = e.options[e.selectedIndex].value;
+  var a = $(".tourClass");
+  for(var i = 0; i<a.length; i++)
+  {
+    treeTour.push($(a[i]).val());
+  }
+  console.log(treeTour);
+  if(treeTour.length > 1)
+  {
+    var theMarkers = [];
+    var thePath = [];
+    var smallestDistance = Infinity;
+    var paths = markers.filter(function(e) {
+      return e.commonname == treeTour[0];
+    });
+    var startPath = paths[Math.floor(Math.random()*paths.length)];
+    theMarkers.push(startPath);
+    thePath.push(startPath.position);
+    for(var y = 1; y<treeTour.length; y++)
+    {
+      var poss = markers.filter(function(e) {
+        return e.commonname == treeTour[y];
+      });
+      console.log(poss);
+      if(poss.length > 0)
+      {
+        var smallest = haversine(startPath.position, poss[0].position);
+        var smallIndex = 0;
+        for(var t = 1; t < poss.length; t++)
+        {
+          if(haversine(startPath.position, poss[t].position) < smallest && haversine(startPath.position, poss[t].position) != 0)
+          {
+            smallest = haversine(startPath.position, poss[t].position);
+            smallIndex = t;
+          }
+        }
+        theMarkers.push(poss[smallIndex]);
+        thePath.push(poss[smallIndex].position);
+        startPath = poss[smallIndex];
+      }
+      else
+      {
+        alert("Sorry, that path is not possible.");
+        return false;
+      }
+    }
+    if(walkingPath)
+    {
+      walkingPath.setMap(null);
+    }
+    walkingPath = new google.maps.Polyline({
+      path: thePath,
+      geodesic: true,
+      strokeColor: '#FF0000',
+      strokeOpacity: 1.0,
+      strokeWeight: 2
+      });
+
+    walkingPath.setMap(map);
+    for(var q = 0; q < markers.length; q++)
+    {
+      markers[q].setMap(null);
+    }
+    for(var q = 0; q < theMarkers.length; q++)
+    {
+      theMarkers[q].setMap(map);
+    }
+   $('#myModal').modal('hide');
+  }
+  else
+  {
+    alert("You must add at least two types of trees")
+  }
+  treeTour = [];
+  return false;
+}
+
 function CenterControl(controlDiv, map) {
 
   // Set CSS for the control border.
@@ -101,7 +242,6 @@ function CenterControl(controlDiv, map) {
   controlUI.style.cursor = 'pointer';
   controlUI.style.marginBottom = '22px';
   controlUI.style.textAlign = 'center';
-  controlUI.title = 'Click to recenter the map';
   controlDiv.appendChild(controlUI);
 
   // Set CSS for the control interior.
@@ -109,15 +249,16 @@ function CenterControl(controlDiv, map) {
   controlText.style.color = 'rgb(25,25,25)';
   controlText.style.fontFamily = 'Roboto,Arial,sans-serif';
   controlText.style.fontSize = '16px';
-  controlText.style.lineHeight = '38px';
+  controlText.style.lineHeight = '16px';
   controlText.style.paddingLeft = '5px';
   controlText.style.paddingRight = '5px';
+  // str += "<h3>Filter</h3><form id='filterMap' onSubmit='return filterf();'><select onChange ='filterf();' name='filterOptions'>";
+  // {% for entry in entries %}
+  // str+=  "<option value='{{entry.title}}'>{{entry.title}}</option>";
+  // {% endfor %}
+  // str += "</select></form>"
   var str = "";
-  str += "<h3>Filter</h3><form id='filterMap' onSubmit='return filterf();'><select onChange ='filterf();' name='filterOptions'>";
-  {% for entry in entries %}
-  str+=  "<option value='{{entry.title}}'>{{entry.title}}</option>";
-  {% endfor %}
-  str += "</select></form>"
+  str+= '<button type="button" class="btn btn-info" data-toggle="modal" data-target="#myModal">Tours</button>';
   controlText.innerHTML = str;
   controlUI.appendChild(controlText);
 
@@ -131,21 +272,28 @@ function CenterControl(controlDiv, map) {
 
 function treeNameFilter(value)
 {
-  return value['commonname'] == $("#filterMap").serializeArray()[0]['value'];
+  var e = document.getElementById("filterOptions");
+  var strUser = e.options[e.selectedIndex].value;
+  return value['commonname'] == strUser;
 }
 
 function filterf()
 {
-  // console.log($("#filterMap").serialize());
-  var a = $("#filterMap").serializeArray();
+  // console.log($("#filterMap").());
+  //console.log(strUser);
   var filtered = markers.filter(treeNameFilter);
   for (var i=0; i<markers.length; i++) {
 
         markers[i].setMap(null);
   }
   addMarkers(filtered);
+  if(walkingPath)
+  {
+    walkingPath.setMap(null);
+  }
   return false;
 }
+
 function addMarkers(filtered)
 {
   for (var i = 0; i < filtered.length; i++)
@@ -153,48 +301,6 @@ function addMarkers(filtered)
     filtered[i].setMap(map);
   }
 
-}
-
-
-function placeMarkers(namelist, positionlist, icon)
-{
-  // for(var i = 0; i < positionlist.length; i++)
-  // {
-  //   var newmarker = new google.maps.Marker({
-  //     position: positionlist[i],
-  //     map: map,
-  //     icon: icon,
-  //     title: namelist[i].commonname,
-  //     commonname: namelist[i].commonname,
-  //     sciname: namelist[i].sciname,
-  //     latitude: positionlist[i]["lat"],
-  //     longitude: positionlist[i]["lng"]
-  //   });
-  //   markers.push(newmarker);
-
-  //   newmarker.addListener('click', function(){
-  //   {% if session['logged_in'] %}
-  //   var cString = "<form id='addTree' class=add-entry onSubmit='return send();'>";
-  //   cString += "<p>"+this.commonname+"</p><select name='select'>";
-  //   var i = 0;
-  //   {% for entry in entries %}
-  //   var lati = this.latitude;
-  //   var longi = this.longitude;
-   
-  //   cString += "<option value='{{entry.title}}'>{{entry.title}}</option>";
-  //   {% endfor %}
-  //   cString += "</select><input type='hidden' name='latitude' value="+lati+"></input>";
-  //   cString += "<input type='hidden' name='longitude' value="+longi+"></input>"
-  //   cString += "<br><br><input type='checkbox' name='delete'>Delete Tree</input><br><br><button value='submit'>Submit</button></form>";
-  //   {% else %}
-  //   var cString = "<p>"+this.commonname+"</p>";
-  //   {% endif %}
-  //   var infowindow = new google.maps.InfoWindow({
-  //     content: cString
-  //   });
-  //     infowindow.open(map, this);
-  //   })
-  // }
 }
 
 
@@ -272,6 +378,8 @@ function initMap() {
     });
     markers.push(newmarker);
 
+    newmarker.setOpacity(0.8);
+
     newmarker.addListener('click', function(){
     {% if session['logged_in'] %}
     var cString = "<form id='addTree' class=add-entry onSubmit='return send();'>";
@@ -294,6 +402,12 @@ function initMap() {
     });
       infowindow.open(map, this);
     })
+
+    newmarker.addListener('dblclick', function(){
+      walkingTour.push(this.position);
+      tour(walkingTour);
+      //console.log(walkingTour);
+    });
   }
   filter = markers;
   // for(var i = 0; i < positionlist.length; i++)
@@ -407,6 +521,8 @@ function initMap() {
 
     markers.push(newmarker);
 
+    newmarker.setOpacity(0.8);
+
     newmarker.addListener('click', function(){
       {% if session['logged_in'] %}
       var cString = "<form id='addTree' class=add-entry onSubmit='return send();'>";
@@ -425,6 +541,12 @@ function initMap() {
     });
       infowindow.open(map, this);
 
+    });
+
+    newmarker.addListener('dblclick', function(){
+      walkingTour.push(this.position);
+      tour(walkingTour);
+      //console.log(walkingTour);
     });
   }
 
@@ -448,6 +570,8 @@ function placeTree(latLng, map)
     map: map
   });
 
+  marker.setOpacity(0.8);
+
   markers.push(marker);
 
   var contentString = "<form id='addTree' class=add-entry onSubmit='return send();'><select name='select'>";
@@ -464,6 +588,59 @@ function placeTree(latLng, map)
   marker.addListener('click', function() {
     infowindow.open(map, marker);
   });
+
+  marker.addListener('dblclick', function() {
+    walkingTour.push(this.position);
+    tour(walkingTour);
+    //console.log(walkingTour);
+  });
+}
+
+// Great circle distance
+function haversine(a,b)
+{
+  var lat1 = a.lat();
+  var lat2  = b.lat();
+  var lon1 = a.lng();
+  var lon2 = b.lng();
+  var R = 6371000; // metres
+  var φ1 = lat1* Math.PI / 180;
+  var φ2 = lat2* Math.PI / 180;
+  var Δφ = (lat2-lat1)* Math.PI / 180;
+  var Δλ = (lon2-lon1)* Math.PI / 180;
+
+  var a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+          Math.cos(φ1) * Math.cos(φ2) *
+          Math.sin(Δλ/2) * Math.sin(Δλ/2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+  var d = R * c;
+  return d;
+}
+
+function tour(walkingTour)
+{
+  var distances = [];
+  if(walkingTour.length > 1)
+  {
+      var walkingPath = new google.maps.Polyline({
+      path: walkingTour,
+      geodesic: true,
+      strokeColor: '#FF0000',
+      strokeOpacity: 1.0,
+      strokeWeight: 2
+      });
+      for(var i = 0; i < walkingTour.length; i++)
+      {
+        for(var y = i+1; y < walkingTour.length; y++)
+        {
+          distances.push(haversine(walkingTour[i],walkingTour[y]));
+        }
+      }
+      //console.log(distances);
+
+  walkingPath.setMap(map);
+  }
 }
 
 function send()
