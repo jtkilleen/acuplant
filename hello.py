@@ -129,6 +129,7 @@ def signup():
 		if entries == 0:
 			g.db.execute('insert into users (username, password) VALUES (?,?)',[request.form['inputEmail'],pw])
 			g.db.commit()
+			session['logged_in'] = True
 			return redirect(url_for('show_trees'))
 
 		return redirect(url_for('signup'))
